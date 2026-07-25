@@ -289,9 +289,13 @@ def cmd_report(args: argparse.Namespace) -> int:
     result = detectors.analyze(records, _now())
     report.write_report(home, records, result, _now())
     if args.mark_reviewed:
-        report.write_state(
-            home, report.significant_ids(result.candidates), _now(), mark_reviewed=True
-        )
+        handled = report.handled_ids(report.load_compiled(home))
+        pending = [
+            cid
+            for cid in report.significant_ids(result.candidates)
+            if cid not in handled
+        ]
+        report.write_state(home, pending, _now(), mark_reviewed=True)
         _emit("report: all candidates marked reviewed")
     _emit(f"report: {len(result.candidates)} candidates → {home / report.REPORT_FILE}")
     return 0

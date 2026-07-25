@@ -43,6 +43,26 @@ def fmt_tokens(count: int) -> str:
     return str(count)
 
 
+def handled_ids(compiled: list[dict[str, object]]) -> set[str]:
+    """Candidate ids that already have a verdict (compiled, keep-llm, dropped).
+
+    A handled candidate never counts toward the unreviewed nudge and its
+    table row stops suggesting a review — its story lives in the Reviewed
+    section and the scoreboard instead.
+
+    Args:
+        compiled: Entries from compiled.json.
+
+    Returns:
+        The candidate ids with any recorded verdict.
+    """
+    return {
+        str(entry.get("candidate_id"))
+        for entry in compiled
+        if entry.get("candidate_id")
+    }
+
+
 def significant_ids(candidates: list[Candidate]) -> list[str]:
     """Ids of the candidates big enough to surface in the badge.
 
@@ -233,7 +253,8 @@ def render_report(
     Returns:
         The Markdown document.
     """
-    parts = [_header(records, now), _candidate_table(result.candidates)]
+    handled = handled_ids(compiled)
+    parts = [_header(records, now), _candidate_table(result.candidates, handled)]
     parts.extend(
         _candidate_detail(candidate) for candidate in result.candidates[:DETAIL_TOP]
     )
@@ -272,11 +293,42 @@ def _header(records: list[SessionRecord], now: datetime) -> str:
     )
 
 
-def _candidate_table(candidates: list[Candidate]) -> str:
+def _action_cell(cand: Candidate, handled: set[str]) -> str:
+    """The table's action column for one candidate.
+
+    Args:
+        cand: The candidate.
+        handled: Ids with a recorded verdict.
+
+    Returns:
+        The suggested action, or a pointer to where its verdict lives.
+    """
+    if cand.id in handled:
+        return "already handled — see Reviewed/scoreboard"
+    return cand.action
+
+
+def _verdict_label(entry: dict[str, object]) -> str:
+    """Human label for a reviewed entry's verdict.
+
+    Args:
+        entry: A compiled.json entry.
+
+    Returns:
+        ``"dropped (workflow removed)"`` or ``"keep LLM"``.
+    """
+    if entry.get("verdict") == "dropped":
+        return "dropped (workflow removed)"
+    return "keep LLM"
+
+
+def _candidate_table(candidates: list[Candidate], handled: set[str]) -> str:
     """Render the ranked candidate table.
 
     Args:
         candidates: Ranked candidates.
+        handled: Ids with a recorded verdict — their action column stops
+            suggesting a review.
 
     Returns:
         The Markdown table (or a placeholder when empty).
@@ -286,7 +338,8 @@ def _candidate_table(candidates: list[Candidate]) -> str:
     rows = [
         f"| {rank} | {cand.id} | {cand.kind} | "
         f"{cand.occurrences}x / {cand.sessions} sessions "
-        f"| {fmt_tokens(cand.est_weekly_savings)}/wk | {cand.action} |"
+        f"| {fmt_tokens(cand.est_weekly_savings)}/wk | "
+        f"{_action_cell(cand, handled)} |"
         for rank, cand in enumerate(candidates[:TABLE_TOP], start=1)
     ]
     overflow = ""
@@ -336,12 +389,14 @@ def _reviewed_keep_llm(compiled: list[dict[str, object]]) -> str:
     Returns:
         The section text.
     """
-    kept = [entry for entry in compiled if entry.get("verdict") == "keep-llm"]
+    kept = [
+        entry for entry in compiled if entry.get("verdict") in ("keep-llm", "dropped")
+    ]
     if not kept:
         return "## Reviewed — keeping LLM\n\nnone reviewed yet\n"
     lines = [
         f"- {entry.get('candidate_id')} — "
-        f"reviewed {entry.get('compiled_at')} — keep LLM"
+        f"reviewed {entry.get('compiled_at')} — {_verdict_label(entry)}"
         for entry in kept
     ]
     return "## Reviewed — keeping LLM\n\n" + "\n".join(lines) + "\n"
@@ -394,4 +449,9 @@ def write_report(
     (home / REPORT_FILE).write_text(
         render_report(records, result, compiled, now), encoding="utf-8"
     )
-    return write_state(home, significant_ids(result.candidates), now)
+    pending = [
+        cid
+        for cid in significant_ids(result.candidates)
+        if cid not in handled_ids(compiled)
+    ]
+    return write_state(home, pending, now)

@@ -131,19 +131,27 @@ def _fake_candidate(index: int) -> Candidate:
 
 
 def test_candidate_table_empty_and_overflow() -> None:
-    """Empty corpus placeholder and the beyond-top-40 overflow note."""
-    assert "none yet" in report._candidate_table([])
-    table = report._candidate_table([_fake_candidate(index) for index in range(45)])
+    """Empty corpus placeholder, overflow note, and handled-action swap."""
+    assert "none yet" in report._candidate_table([], set())
+    table = report._candidate_table(
+        [_fake_candidate(index) for index in range(45)], {"err-00000001"}
+    )
     assert "plus 5 below the fold" in table
+    assert "already handled — see Reviewed/scoreboard" in table
 
 
 def test_reviewed_keep_llm_section() -> None:
     """Empty and populated reviewed-keep-LLM sections."""
     assert "none reviewed yet" in report._reviewed_keep_llm([])
     section = report._reviewed_keep_llm(
-        [_compiled_entry(verdict="keep-llm", candidate_id="skill-x")]
+        [
+            _compiled_entry(verdict="keep-llm", candidate_id="skill-x"),
+            _compiled_entry(verdict="dropped", candidate_id="skill-y"),
+        ]
     )
     assert "skill-x" in section
+    assert "skill-y — reviewed" in section
+    assert "dropped (workflow removed)" in section
 
 
 def test_render_and_write_report(tmp_path: Path) -> None:
@@ -174,6 +182,13 @@ def test_render_and_write_report(tmp_path: Path) -> None:
     assert unreviewed == 1
     assert len(result.candidates) > 1
     assert (tmp_path / report.REPORT_FILE).is_file()
+    (tmp_path / report.COMPILED_FILE).write_text(
+        json.dumps([_compiled_entry()]), encoding="utf-8"
+    )
+    assert report.write_report(tmp_path, records, result, NOW) == 0
+    assert "already handled" in (tmp_path / report.REPORT_FILE).read_text(
+        encoding="utf-8"
+    )
 
 
 def test_trend_and_header_empty_states() -> None:
