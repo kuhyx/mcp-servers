@@ -290,7 +290,7 @@ def cmd_report(args: argparse.Namespace) -> int:
     report.write_report(home, records, result, _now())
     if args.mark_reviewed:
         report.write_state(
-            home, [cand.id for cand in result.candidates], _now(), mark_reviewed=True
+            home, report.significant_ids(result.candidates), _now(), mark_reviewed=True
         )
         _emit("report: all candidates marked reviewed")
     _emit(f"report: {len(result.candidates)} candidates → {home / report.REPORT_FILE}")

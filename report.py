@@ -22,6 +22,9 @@ THOUSAND = 1_000
 MILLION = 1_000_000
 TABLE_TOP = 40
 DETAIL_TOP = 25
+# The ⚙ badge / SessionStart nudge count only candidates at least this big —
+# nobody reviews 180 weak n-grams, so the count must mean "worth your time".
+SIGNIFICANT_WEEKLY_TOKENS = 100_000
 
 
 def fmt_tokens(count: int) -> str:
@@ -38,6 +41,23 @@ def fmt_tokens(count: int) -> str:
     if count >= THOUSAND:
         return f"{count // THOUSAND}k"
     return str(count)
+
+
+def significant_ids(candidates: list[Candidate]) -> list[str]:
+    """Ids of the candidates big enough to surface in the badge.
+
+    Args:
+        candidates: Ranked candidates.
+
+    Returns:
+        Ids with at least :data:`SIGNIFICANT_WEEKLY_TOKENS` estimated weekly
+        tokens at stake, in rank order.
+    """
+    return [
+        cand.id
+        for cand in candidates
+        if cand.est_weekly_savings >= SIGNIFICANT_WEEKLY_TOKENS
+    ]
 
 
 def load_state(home: Path) -> dict[str, object]:
@@ -374,4 +394,4 @@ def write_report(
     (home / REPORT_FILE).write_text(
         render_report(records, result, compiled, now), encoding="utf-8"
     )
-    return write_state(home, [cand.id for cand in result.candidates], now)
+    return write_state(home, significant_ids(result.candidates), now)

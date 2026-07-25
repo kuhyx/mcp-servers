@@ -152,7 +152,8 @@ def test_render_and_write_report(tmp_path: Path) -> None:
         record(
             "a",
             obs=Observations(
-                skill_invocations=[invocation()] * 3, error_signatures={"boom: x": 12}
+                skill_invocations=[invocation(output=500_000)] * 3,
+                error_signatures={"boom: x": 12},
             ),
         ),
     ]
@@ -170,7 +171,8 @@ def test_render_and_write_report(tmp_path: Path) -> None:
     assert "Context-bloat trend" in text
     assert "Compiled scoreboard" in text
     unreviewed = report.write_report(tmp_path, records, result, NOW)
-    assert unreviewed == len(result.candidates)
+    assert unreviewed == 1
+    assert len(result.candidates) > 1
     assert (tmp_path / report.REPORT_FILE).is_file()
 
 
