@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 @dataclass
@@ -26,6 +26,39 @@ class TokenTotals:
         self.input += _as_int(usage.get("input_tokens"))
         self.cache_read += _as_int(usage.get("cache_read_input_tokens"))
         self.cache_write += _as_int(usage.get("cache_creation_input_tokens"))
+
+
+@dataclass
+class TurnEfficiency:
+    """API round-trips taken, and how many of them a script could have taken.
+
+    Cache-read tokens dominate a long session (one measured session: 235M read
+    against 800k output), and cache read is charged per round-trip on the whole
+    conversation so far. So the cost lever is the NUMBER of turns, not the length
+    of any message — and turns where the model decided nothing are pure waste.
+    """
+
+    api_turns: int = 0
+    tool_calls: int = 0
+    batched_turns: int = 0
+    poll_turns: int = 0
+    lint_test_turns: int = 0
+    vcs_check_turns: int = 0
+
+    @property
+    def mechanical_turns(self) -> int:
+        """Turns whose every action was observation a script could have done."""
+        return self.poll_turns + self.lint_test_turns + self.vcs_check_turns
+
+    @property
+    def batching_rate(self) -> float:
+        """Share of tool-carrying turns that issued more than one call (0..1)."""
+        return self.batched_turns / self.api_turns if self.api_turns else 0.0
+
+    @property
+    def mechanical_rate(self) -> float:
+        """Share of tool-carrying turns that were purely mechanical (0..1)."""
+        return self.mechanical_turns / self.api_turns if self.api_turns else 0.0
 
 
 @dataclass
@@ -90,6 +123,7 @@ class SessionRecord:
     meta: SessionMeta = field(default_factory=SessionMeta)
     counts: ActivityCounts = field(default_factory=ActivityCounts)
     tokens: TokenTotals = field(default_factory=TokenTotals)
+    turns: TurnEfficiency = field(default_factory=TurnEfficiency)
     obs: Observations = field(default_factory=Observations)
 
     def to_dict(self) -> dict[str, object]:
@@ -98,7 +132,15 @@ class SessionRecord:
         Returns:
             A plain dict with nested dataclasses expanded.
         """
-        return asdict(self)
+        data = asdict(self)
+        # asdict() only walks fields, so the derived rates are added by hand —
+        # readers of sessions.jsonl should not have to recompute them.
+        data["turns"] |= {
+            "mechanical_turns": self.turns.mechanical_turns,
+            "batching_rate": round(self.turns.batching_rate, 4),
+            "mechanical_rate": round(self.turns.mechanical_rate, 4),
+        }
+        return data
 
 
 def _meta_from_dict(data: object) -> SessionMeta:
@@ -153,6 +195,25 @@ def _tokens_from_dict(data: object) -> TokenTotals:
         input=_as_int(_dict_get(data, "input")),
         cache_read=_as_int(_dict_get(data, "cache_read")),
         cache_write=_as_int(_dict_get(data, "cache_write")),
+    )
+
+
+def _turns_from_dict(data: object) -> TurnEfficiency:
+    """Rebuild turn-efficiency counts from their serialized form.
+
+    Args:
+        data: The ``turns`` value of a stored record.
+
+    Returns:
+        The reconstructed counts (zeros on junk or on pre-v3 records).
+    """
+    return TurnEfficiency(
+        api_turns=_as_int(_dict_get(data, "api_turns")),
+        tool_calls=_as_int(_dict_get(data, "tool_calls")),
+        batched_turns=_as_int(_dict_get(data, "batched_turns")),
+        poll_turns=_as_int(_dict_get(data, "poll_turns")),
+        lint_test_turns=_as_int(_dict_get(data, "lint_test_turns")),
+        vcs_check_turns=_as_int(_dict_get(data, "vcs_check_turns")),
     )
 
 
@@ -211,6 +272,7 @@ def record_from_dict(data: dict[str, object]) -> SessionRecord:
         meta=_meta_from_dict(data.get("meta")),
         counts=_counts_from_dict(data.get("counts")),
         tokens=_tokens_from_dict(data.get("tokens")),
+        turns=_turns_from_dict(data.get("turns")),
         obs=_obs_from_dict(data.get("obs")),
     )
 

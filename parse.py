@@ -7,6 +7,7 @@ parse result outlives the accumulator fields it updates.
 from __future__ import annotations
 
 from collections import Counter
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import json
 import re
@@ -19,8 +20,10 @@ from python_pkg.session_autopsy.records import (
     SessionRecord,
     SkillInvocation,
     TokenTotals,
+    TurnEfficiency,
 )
 from python_pkg.session_autopsy.signatures import command_signature, normalize_signature
+from python_pkg.session_autopsy.turns import LINT_TEST, POLL, VCS_CHECK, classify_turn
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -83,6 +86,69 @@ _GENERIC_ERROR_SIGS = frozenset(
 )
 
 
+@dataclass
+class _OpenTurn:
+    """The API turn currently being accumulated, keyed by requestId."""
+
+    request_id: str | None = None
+    tools: int = 0
+    commands: list[str] = field(default_factory=list)
+
+
+class _TurnTracker:
+    """Running turn-efficiency totals plus the turn currently open.
+
+    The two belong together: the open turn only exists to be folded into the
+    totals, and keeping them as one object is also what keeps ``_Accumulator``
+    inside its instance-attribute budget.
+    """
+
+    def __init__(self) -> None:
+        """Start with empty totals and no open turn."""
+        self.totals = TurnEfficiency()
+        self._open = _OpenTurn()
+
+    def begin(self, request_id: object) -> None:
+        """Open a new turn if this line belongs to a different API response.
+
+        Args:
+            request_id: The line's ``requestId`` (or message-id fallback).
+        """
+        if request_id != self._open.request_id:
+            self.flush()
+            self._open.request_id = request_id if isinstance(request_id, str) else None
+
+    def add_tool(self) -> None:
+        """Count one tool_use block in the open turn."""
+        self._open.tools += 1
+
+    def add_command(self, command: str) -> None:
+        """Record one Bash command issued in the open turn.
+
+        Args:
+            command: The raw Bash tool input.
+        """
+        self._open.commands.append(command)
+
+    def flush(self) -> None:
+        """Fold the open turn into the totals and start a fresh one."""
+        open_turn = self._open
+        self._open = _OpenTurn()
+        if open_turn.tools <= 0:
+            return
+        self.totals.api_turns += 1
+        self.totals.tool_calls += open_turn.tools
+        if open_turn.tools > 1:
+            self.totals.batched_turns += 1
+        label = classify_turn(open_turn.commands)
+        if label == POLL:
+            self.totals.poll_turns += 1
+        elif label == LINT_TEST:
+            self.totals.lint_test_turns += 1
+        elif label == VCS_CHECK:
+            self.totals.vcs_check_turns += 1
+
+
 class _Accumulator:
     """Mutable per-session state fed one transcript line at a time."""
 
@@ -99,6 +165,15 @@ class _Accumulator:
         self.skill_invocations: list[SkillInvocation] = []
         self._current_run: list[str] = []
         self._current_skill: SkillInvocation | None = None
+        # One API response can span several transcript lines, so batching has to be
+        # grouped by requestId — counting per line would report every turn as
+        # single-tool and hide the real (much lower) batching rate.
+        self._turns = _TurnTracker()
+
+    @property
+    def turns(self) -> TurnEfficiency:
+        """Turn-efficiency totals accumulated so far."""
+        return self._turns.totals
 
     def feed_line(self, raw_line: str) -> None:
         """Parse and account one transcript line.
@@ -120,9 +195,10 @@ class _Accumulator:
         self._dispatch(obj)
 
     def finish(self) -> None:
-        """Flush any still-open Bash run and skill span."""
+        """Flush any still-open Bash run, skill span and API turn."""
         self._flush_run()
         self._flush_skill()
+        self._turns.flush()
 
     def _dispatch(self, obj: dict[str, object]) -> None:
         """Route a parsed line by its ``type``.
@@ -180,6 +256,7 @@ class _Accumulator:
             return
         self._note_metadata(obj)
         self.counts.assistant_msgs += 1
+        self._turns.begin(obj.get("requestId") or _message_id(message))
         usage = message.get("usage")
         if isinstance(usage, dict):
             self.tokens.add_usage(usage)
@@ -217,6 +294,7 @@ class _Accumulator:
                     text_chars += len(text.strip())
             elif block_type == "tool_use":
                 had_tool_use = True
+                self._turns.add_tool()
                 text_chars += _generated_chars(block)
                 self._on_tool_use(block)
         return (text_chars, had_tool_use)
@@ -250,6 +328,7 @@ class _Accumulator:
         command = tool_input.get("command")
         if not isinstance(command, str):
             return
+        self._turns.add_command(command)
         first_line = normalize_signature(command)
         if first_line:
             self.bash_first_lines[first_line] += 1
@@ -447,6 +526,7 @@ def parse_session(transcript_path: Path) -> SessionRecord:
         meta=acc.meta,
         counts=acc.counts,
         tokens=acc.tokens,
+        turns=acc.turns,
         obs=Observations(
             tool_histogram=dict(acc.tool_histogram),
             bash_first_lines=_top(acc.bash_first_lines, MAX_BASH_FIRST_LINES),
@@ -456,3 +536,16 @@ def parse_session(transcript_path: Path) -> SessionRecord:
             typed_prompt_signatures=_top(acc.typed_prompt_signatures, MAX_PROMPT_SIGS),
         ),
     )
+
+
+def _message_id(message: dict[str, object]) -> str | None:
+    """Fallback turn key for lines that carry no ``requestId``.
+
+    Args:
+        message: The ``message`` object of an assistant line.
+
+    Returns:
+        The message id when present, else None.
+    """
+    value = message.get("id")
+    return value if isinstance(value, str) else None

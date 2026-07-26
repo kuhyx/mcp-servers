@@ -8,7 +8,12 @@ from typing import TYPE_CHECKING
 
 from python_pkg.session_autopsy import report
 from python_pkg.session_autopsy.detectors import Candidate, analyze
-from python_pkg.session_autopsy.records import ActivityCounts, Observations
+from python_pkg.session_autopsy.records import (
+    ActivityCounts,
+    Observations,
+    TokenTotals,
+    TurnEfficiency,
+)
 from python_pkg.session_autopsy.tests.conftest import (
     invocation,
     record,
@@ -212,3 +217,24 @@ def test_state_file_is_valid_json(tmp_path: Path) -> None:
     payload = json.loads((tmp_path / report.STATE_FILE).read_text(encoding="utf-8"))
     assert payload["candidate_ids"] == ["x"]
     assert payload["last_generated"].startswith("2026-07-24")
+
+
+def test_turn_efficiency_section_prices_mechanical_turns() -> None:
+    """The point of the section: put a token number on turns nobody needed."""
+    rec = record("s1", tokens=TokenTotals(cache_read=100_000_000))
+    rec.turns = TurnEfficiency(
+        api_turns=100,
+        tool_calls=120,
+        batched_turns=12,
+        poll_turns=20,
+        lint_test_turns=10,
+        vcs_check_turns=5,
+    )
+    text = report._turn_efficiency([rec])
+    assert "100 tool turns carrying 120 calls" in text
+    assert "batched: 12 (12%)" in text
+    assert "**35** (35%)" in text  # 20 + 10 + 5 mechanical turns
+
+
+def test_turn_efficiency_section_without_tool_turns() -> None:
+    assert "no tool turns recorded yet" in report._turn_efficiency([record("s1")])
