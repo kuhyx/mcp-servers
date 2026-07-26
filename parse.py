@@ -7,7 +7,6 @@ parse result outlives the accumulator fields it updates.
 from __future__ import annotations
 
 from collections import Counter
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import json
 import re
@@ -23,7 +22,7 @@ from python_pkg.session_autopsy.records import (
     TurnEfficiency,
 )
 from python_pkg.session_autopsy.signatures import command_signature, normalize_signature
-from python_pkg.session_autopsy.turns import LINT_TEST, POLL, VCS_CHECK, classify_turn
+from python_pkg.session_autopsy.turn_tracker import TurnTracker
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -86,69 +85,6 @@ _GENERIC_ERROR_SIGS = frozenset(
 )
 
 
-@dataclass
-class _OpenTurn:
-    """The API turn currently being accumulated, keyed by requestId."""
-
-    request_id: str | None = None
-    tools: int = 0
-    commands: list[str] = field(default_factory=list)
-
-
-class _TurnTracker:
-    """Running turn-efficiency totals plus the turn currently open.
-
-    The two belong together: the open turn only exists to be folded into the
-    totals, and keeping them as one object is also what keeps ``_Accumulator``
-    inside its instance-attribute budget.
-    """
-
-    def __init__(self) -> None:
-        """Start with empty totals and no open turn."""
-        self.totals = TurnEfficiency()
-        self._open = _OpenTurn()
-
-    def begin(self, request_id: object) -> None:
-        """Open a new turn if this line belongs to a different API response.
-
-        Args:
-            request_id: The line's ``requestId`` (or message-id fallback).
-        """
-        if request_id != self._open.request_id:
-            self.flush()
-            self._open.request_id = request_id if isinstance(request_id, str) else None
-
-    def add_tool(self) -> None:
-        """Count one tool_use block in the open turn."""
-        self._open.tools += 1
-
-    def add_command(self, command: str) -> None:
-        """Record one Bash command issued in the open turn.
-
-        Args:
-            command: The raw Bash tool input.
-        """
-        self._open.commands.append(command)
-
-    def flush(self) -> None:
-        """Fold the open turn into the totals and start a fresh one."""
-        open_turn = self._open
-        self._open = _OpenTurn()
-        if open_turn.tools <= 0:
-            return
-        self.totals.api_turns += 1
-        self.totals.tool_calls += open_turn.tools
-        if open_turn.tools > 1:
-            self.totals.batched_turns += 1
-        label = classify_turn(open_turn.commands)
-        if label == POLL:
-            self.totals.poll_turns += 1
-        elif label == LINT_TEST:
-            self.totals.lint_test_turns += 1
-        elif label == VCS_CHECK:
-            self.totals.vcs_check_turns += 1
-
-
 class _Accumulator:
     """Mutable per-session state fed one transcript line at a time."""
 
@@ -168,7 +104,7 @@ class _Accumulator:
         # One API response can span several transcript lines, so batching has to be
         # grouped by requestId — counting per line would report every turn as
         # single-tool and hide the real (much lower) batching rate.
-        self._turns = _TurnTracker()
+        self._turns = TurnTracker()
 
     @property
     def turns(self) -> TurnEfficiency:

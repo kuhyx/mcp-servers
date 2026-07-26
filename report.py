@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+from python_pkg.session_autopsy.report_cells import action_cell, verdict_label
 from python_pkg.session_autopsy.stats import parse_timestamp
 
 if TYPE_CHECKING:
@@ -340,35 +341,6 @@ def _turn_efficiency(records: list[SessionRecord]) -> str:
     )
 
 
-def _action_cell(cand: Candidate, handled: set[str]) -> str:
-    """The table's action column for one candidate.
-
-    Args:
-        cand: The candidate.
-        handled: Ids with a recorded verdict.
-
-    Returns:
-        The suggested action, or a pointer to where its verdict lives.
-    """
-    if cand.id in handled:
-        return "already handled — see Reviewed/scoreboard"
-    return cand.action
-
-
-def _verdict_label(entry: dict[str, object]) -> str:
-    """Human label for a reviewed entry's verdict.
-
-    Args:
-        entry: A compiled.json entry.
-
-    Returns:
-        ``"dropped (workflow removed)"`` or ``"keep LLM"``.
-    """
-    if entry.get("verdict") == "dropped":
-        return "dropped (workflow removed)"
-    return "keep LLM"
-
-
 def _candidate_table(candidates: list[Candidate], handled: set[str]) -> str:
     """Render the ranked candidate table.
 
@@ -386,7 +358,7 @@ def _candidate_table(candidates: list[Candidate], handled: set[str]) -> str:
         f"| {rank} | {cand.id} | {cand.kind} | "
         f"{cand.occurrences}x / {cand.sessions} sessions "
         f"| {fmt_tokens(cand.est_weekly_savings)}/wk | "
-        f"{_action_cell(cand, handled)} |"
+        f"{action_cell(cand, handled)} |"
         for rank, cand in enumerate(candidates[:TABLE_TOP], start=1)
     ]
     overflow = ""
@@ -443,7 +415,7 @@ def _reviewed_keep_llm(compiled: list[dict[str, object]]) -> str:
         return "## Reviewed — keeping LLM\n\nnone reviewed yet\n"
     lines = [
         f"- {entry.get('candidate_id')} — "
-        f"reviewed {entry.get('compiled_at')} — {_verdict_label(entry)}"
+        f"reviewed {entry.get('compiled_at')} — {verdict_label(entry)}"
         for entry in kept
     ]
     return "## Reviewed — keeping LLM\n\n" + "\n".join(lines) + "\n"
