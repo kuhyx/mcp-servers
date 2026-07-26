@@ -2,7 +2,7 @@
 
 These are pure functions over plain numbers, timestamps and token totals — no
 knowledge of what a candidate is. Keeping them here leaves
-:mod:`python_pkg.session_autopsy.detectors` to the heuristics themselves.
+:mod:`session_autopsy.detectors` to the heuristics themselves.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from difflib import SequenceMatcher
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from python_pkg.session_autopsy.records import SessionRecord
+    from session_autopsy.records import SessionRecord
 
 TRAILING_WEEKS = 8
 MAX_SIMILARITY_INVOCATIONS = 5

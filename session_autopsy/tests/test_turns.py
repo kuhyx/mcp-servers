@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from python_pkg.session_autopsy.turns import (
+from session_autopsy.turns import (
     LINT_TEST,
     POLL,
     SUBSTANTIVE,

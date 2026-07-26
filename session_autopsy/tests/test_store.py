@@ -5,15 +5,15 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from python_pkg.session_autopsy.records import ActivityCounts
-from python_pkg.session_autopsy.store import (
+from session_autopsy.records import ActivityCounts
+from session_autopsy.store import (
     SESSIONS_FILE,
     StoreLock,
     load_file_index,
     load_records,
     upsert_records,
 )
-from python_pkg.session_autopsy.tests.conftest import (
+from session_autopsy.tests.conftest import (
     FileFacts,
     record,
 )

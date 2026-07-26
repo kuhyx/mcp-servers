@@ -1,7 +1,7 @@
 """Command-line entry point for the session autopsy analyzer.
 
 Usage, with ``PYTHONPATH=~/testsAndMisc`` and ``python3 -m
-python_pkg.session_autopsy``:
+session_autopsy``:
 
     ingest <transcript.jsonl>
     scan --jobs 8
@@ -20,11 +20,11 @@ import sys
 import time
 from typing import TYPE_CHECKING
 
-from python_pkg.session_autopsy import config, detectors, report, store, traces
-from python_pkg.session_autopsy.parse import parse_session
+from session_autopsy import config, detectors, report, store, traces
+from session_autopsy.parse import parse_session
 
 if TYPE_CHECKING:
-    from python_pkg.session_autopsy.records import SessionRecord
+    from session_autopsy.records import SessionRecord
 
 DEFAULT_SCAN_JOBS = 4
 DEFAULT_TRACE_INVOCATIONS = 5
@@ -66,7 +66,7 @@ def build_parser() -> argparse.ArgumentParser:
         Parser with all subcommands.
     """
     parser = argparse.ArgumentParser(
-        prog="python -m python_pkg.session_autopsy",
+        prog="python -m session_autopsy",
         description="Deterministic Claude Code transcript analyzer.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)

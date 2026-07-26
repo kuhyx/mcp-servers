@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from python_pkg.session_autopsy.records import TurnEfficiency
-from python_pkg.session_autopsy.turns import LINT_TEST, POLL, VCS_CHECK, classify_turn
+from session_autopsy.records import TurnEfficiency
+from session_autopsy.turns import LINT_TEST, POLL, VCS_CHECK, classify_turn
 
 
 @dataclass

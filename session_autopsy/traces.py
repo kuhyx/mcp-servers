@@ -10,13 +10,13 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from python_pkg.session_autopsy.signatures import command_signature, normalize_signature
+from session_autopsy.signatures import command_signature, normalize_signature
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from python_pkg.session_autopsy.detectors import Candidate
-    from python_pkg.session_autopsy.records import SessionRecord
+    from session_autopsy.detectors import Candidate
+    from session_autopsy.records import SessionRecord
 
 MAX_LINES_PER_SPAN = 200
 MAX_TEXT_CHARS = 200

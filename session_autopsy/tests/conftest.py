@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from python_pkg.session_autopsy.records import (
+from session_autopsy.records import (
     ActivityCounts,
     Observations,
     SessionMeta,

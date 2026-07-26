@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from python_pkg.session_autopsy import cli, config, report, store
-from python_pkg.session_autopsy.records import Observations
-from python_pkg.session_autopsy.tests.conftest import (
+from session_autopsy import cli, config, report, store
+from session_autopsy.records import Observations
+from session_autopsy.tests.conftest import (
     FileFacts,
     assistant_line,
     bash_block,
@@ -26,7 +26,7 @@ from python_pkg.session_autopsy.tests.conftest import (
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from python_pkg.session_autopsy.tests.conftest import AutopsyEnv
+    from session_autopsy.tests.conftest import AutopsyEnv
 
 
 def test_config_env_overrides(autopsy_env: AutopsyEnv) -> None:
@@ -187,8 +187,8 @@ def test_measure_command(
 def test_main_module_entry(
     autopsy_env: AutopsyEnv, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """python -m python_pkg.session_autopsy dispatches and exits."""
+    """python -m session_autopsy dispatches and exits."""
     monkeypatch.setattr(sys, "argv", ["session_autopsy", "measure"])
     with pytest.raises(SystemExit) as excinfo:
-        runpy.run_module("python_pkg.session_autopsy", run_name="__main__")
+        runpy.run_module("session_autopsy", run_name="__main__")
     assert excinfo.value.code == 0

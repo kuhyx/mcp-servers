@@ -6,15 +6,15 @@ from datetime import datetime, timezone
 import json
 from typing import TYPE_CHECKING
 
-from python_pkg.session_autopsy import report
-from python_pkg.session_autopsy.detectors import Candidate, analyze
-from python_pkg.session_autopsy.records import (
+from session_autopsy import report
+from session_autopsy.detectors import Candidate, analyze
+from session_autopsy.records import (
     ActivityCounts,
     Observations,
     TokenTotals,
     TurnEfficiency,
 )
-from python_pkg.session_autopsy.tests.conftest import (
+from session_autopsy.tests.conftest import (
     invocation,
     record,
     session_meta,

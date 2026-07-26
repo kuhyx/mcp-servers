@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from python_pkg.session_autopsy import signatures
-from python_pkg.session_autopsy.signatures import command_signature, normalize_signature
+from session_autopsy import signatures
+from session_autopsy.signatures import command_signature, normalize_signature
 
 
 def test_normalize_signature() -> None:

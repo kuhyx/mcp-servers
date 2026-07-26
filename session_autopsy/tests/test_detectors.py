@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from python_pkg.session_autopsy import detectors, stats
-from python_pkg.session_autopsy.detectors import analyze
-from python_pkg.session_autopsy.records import (
+from session_autopsy import detectors, stats
+from session_autopsy.detectors import analyze
+from session_autopsy.records import (
     ActivityCounts,
     Observations,
     TokenTotals,
 )
-from python_pkg.session_autopsy.stats import parse_timestamp
-from python_pkg.session_autopsy.tests.conftest import (
+from session_autopsy.stats import parse_timestamp
+from session_autopsy.tests.conftest import (
     invocation,
     record,
     session_meta,

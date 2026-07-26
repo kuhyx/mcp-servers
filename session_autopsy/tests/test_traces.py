@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from python_pkg.session_autopsy import traces
-from python_pkg.session_autopsy.detectors import Candidate
-from python_pkg.session_autopsy.tests.conftest import (
+from session_autopsy import traces
+from session_autopsy.detectors import Candidate
+from session_autopsy.tests.conftest import (
     FileFacts,
     assistant_line,
     bash_block,
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
     import pytest
 
-    from python_pkg.session_autopsy.records import SessionRecord
+    from session_autopsy.records import SessionRecord
 
 
 DENIED = "rm: cannot remove '/home/kuhy/.cache/yay/pkg': Permission denied"

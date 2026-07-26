@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
-from python_pkg.session_autopsy.records import SessionRecord, record_from_dict
+from session_autopsy.records import SessionRecord, record_from_dict
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

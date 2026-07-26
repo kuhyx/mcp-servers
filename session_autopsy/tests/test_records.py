@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from python_pkg.session_autopsy.records import (
+from session_autopsy.records import (
     ActivityCounts,
     Observations,
     SessionMeta,

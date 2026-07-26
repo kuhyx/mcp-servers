@@ -12,7 +12,7 @@ import json
 import re
 from typing import TYPE_CHECKING
 
-from python_pkg.session_autopsy.records import (
+from session_autopsy.records import (
     ActivityCounts,
     Observations,
     SessionMeta,
@@ -21,8 +21,8 @@ from python_pkg.session_autopsy.records import (
     TokenTotals,
     TurnEfficiency,
 )
-from python_pkg.session_autopsy.signatures import command_signature, normalize_signature
-from python_pkg.session_autopsy.turn_tracker import TurnTracker
+from session_autopsy.signatures import command_signature, normalize_signature
+from session_autopsy.turn_tracker import TurnTracker
 
 if TYPE_CHECKING:
     from pathlib import Path

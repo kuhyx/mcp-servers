@@ -1,7 +1,7 @@
 """Stable text signatures for messages, commands and errors.
 
-Two modules need these: :mod:`python_pkg.session_autopsy.parse` while streaming
-a transcript, and :mod:`python_pkg.session_autopsy.traces` when re-reading one to
+Two modules need these: :mod:`session_autopsy.parse` while streaming
+a transcript, and :mod:`session_autopsy.traces` when re-reading one to
 pull evidence. They live here rather than in either of those so neither has to
 import the other.
 """

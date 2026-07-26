@@ -5,13 +5,13 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from python_pkg.session_autopsy import parse
-from python_pkg.session_autopsy.parse import (
+from session_autopsy import parse
+from session_autopsy.parse import (
     _Accumulator,
     parse_session,
     subagent_files,
 )
-from python_pkg.session_autopsy.tests.conftest import (
+from session_autopsy.tests.conftest import (
     assistant_line,
     bash_block,
     prompt_line,

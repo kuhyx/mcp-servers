@@ -10,12 +10,12 @@ from dataclasses import dataclass, field
 import hashlib
 from typing import TYPE_CHECKING
 
-from python_pkg.session_autopsy import stats
+from session_autopsy import stats
 
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from python_pkg.session_autopsy.records import SessionRecord, SkillInvocation
+    from session_autopsy.records import SessionRecord, SkillInvocation
 
 MIN_SKILL_INVOCATIONS = 3
 NGRAM_SIZES = range(3, 7)

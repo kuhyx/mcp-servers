@@ -5,20 +5,20 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from python_pkg.session_autopsy.report_cells import action_cell, verdict_label
-from python_pkg.session_autopsy.stats import parse_timestamp
+from session_autopsy.report_cells import action_cell, verdict_label
+from session_autopsy.stats import parse_timestamp
 
 if TYPE_CHECKING:
     from datetime import datetime
     from pathlib import Path
 
-    from python_pkg.session_autopsy.detectors import AnalysisResult, Candidate
-    from python_pkg.session_autopsy.records import SessionRecord
+    from session_autopsy.detectors import AnalysisResult, Candidate
+    from session_autopsy.records import SessionRecord
 
 REPORT_FILE = "REPORT.md"
 STATE_FILE = "state.json"
 COMPILED_FILE = "compiled.json"
-TRACES_HINT = "PYTHONPATH=~/testsAndMisc python3 -m python_pkg.session_autopsy traces"
+TRACES_HINT = "PYTHONPATH=~/testsAndMisc python3 -m session_autopsy traces"
 THOUSAND = 1_000
 MILLION = 1_000_000
 TABLE_TOP = 40
