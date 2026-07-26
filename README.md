@@ -1,7 +1,18 @@
 # mcp-servers
 
-The MCP server fleet: 24 third-party servers, moved out of the `testsAndMisc`
-monorepo where 12 GB of clones and build output did not belong.
+Claude Code tooling pulled out of the `testsAndMisc` monorepo, where 12 GB of
+third-party clones and build output did not belong.
+
+| | |
+|---|---|
+| `servers.json` + `setup.sh` + `servers/` | the MCP server fleet — 24 third-party servers |
+| `session-autopsy/` | zero-token analyzer for Claude Code transcripts |
+
+(The repo name is narrower than its contents; renaming is one `gh repo rename` away,
+but the local path is referenced by absolute paths in `~/.claude.json`, so the
+directory should stay put.)
+
+## The MCP fleet
 
 ## What is tracked, and what is not
 
@@ -25,6 +36,17 @@ manifest restores the fleet; a stale 12 GB fork does not.
 `setup.sh` is idempotent: existing clones are fetched and checked out to the pin.
 Build steps are per-server (npm / cargo / uv) and deliberately not automated — see
 each server's own README.
+
+## session-autopsy
+
+Reads Claude Code transcripts and reports where the tokens went, with no model in the
+loop. Runs as the `SessionEnd` hook:
+
+```bash
+PYTHONPATH="$HOME/mcp-servers/session-autopsy" python3 -m session_autopsy ingest "$transcript" --quiet
+```
+
+See `session-autopsy/README.md`. Extracted with history intact; 100% branch coverage.
 
 ## Registration
 
