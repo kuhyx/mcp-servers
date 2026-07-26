@@ -1,0 +1,9 @@
+# The server clones themselves are NOT tracked. They are 24 upstream repos with
+# their own .git directories plus ~10GB of regenerable build output (node_modules,
+# target/, venvs). Nesting them in this repo would give broken gitlinks and commit
+# artifacts that rebuild anyway.
+#
+# What IS tracked is servers.json — every upstream URL and the exact commit in use —
+# and setup.sh, which reconstructs the fleet from it. That is the part worth backing
+# up: ~50KB that restores 12GB reproducibly.
+servers/
