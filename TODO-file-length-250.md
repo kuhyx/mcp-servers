@@ -13,7 +13,7 @@ enforced by a gate that fails the commit, not by a note anyone can ignore.
 Why: a file that cannot be read in one piece forces re-reads and partial edits,
 which is the single largest avoidable cost in an LLM-assisted workflow. Aim by
 churn, not size alone — refactoring pays where code is read and changed often
-(Fowler, *refactoring economic benefit*).
+(Fowler, _refactoring economic benefit_).
 
 ## Scope in this repo
 
@@ -21,6 +21,7 @@ churn, not size alone — refactoring pays where code is read and changed often
 - **3,224 lines** sit in violation; longest file is **487 lines**.
 
 Exempt (do NOT split these):
+
 - generated files — `*.g.dart`, `*.freezed.dart`, `*.gr.dart`, `**/l10n/generated/**`,
   anything with a `GENERATED` header
 - markup — `.html`, `.css`, `.scss`
@@ -32,16 +33,16 @@ Exempt (do NOT split these):
 ROI = lines x commits in the last year. Work top-down; a long file nobody edits
 has near-zero payoff and should not be first.
 
-| lines | commits/yr | kind | file |
-|------:|-----------:|:-----|:-----|
-| 487 | 0 | code | `session-autopsy/session_autopsy/parse.py` |
-| 476 | 0 | code | `session-autopsy/session_autopsy/report.py` |
-| 390 | 0 | code | `session-autopsy/session_autopsy/cli.py` |
-| 390 | 0 | code | `session-autopsy/session_autopsy/records.py` |
-| 467 | 0 | code | `session-autopsy/session_autopsy/detectors.py` |
-| 392 | 0 | code | `session-autopsy/session_autopsy/traces.py` |
-| 356 | 0 | code | `session-autopsy/session_autopsy/tests/test_parse.py` |
-| 266 | 0 | code | `session-autopsy/session_autopsy/tests/test_traces.py` |
+| lines | commits/yr | kind | file                                                   |
+| ----: | ---------: | :--- | :----------------------------------------------------- |
+|   487 |          0 | code | `session-autopsy/session_autopsy/parse.py`             |
+|   476 |          0 | code | `session-autopsy/session_autopsy/report.py`            |
+|   390 |          0 | code | `session-autopsy/session_autopsy/cli.py`               |
+|   390 |          0 | code | `session-autopsy/session_autopsy/records.py`           |
+|   467 |          0 | code | `session-autopsy/session_autopsy/detectors.py`         |
+|   392 |          0 | code | `session-autopsy/session_autopsy/traces.py`            |
+|   356 |          0 | code | `session-autopsy/session_autopsy/tests/test_parse.py`  |
+|   266 |          0 | code | `session-autopsy/session_autopsy/tests/test_traces.py` |
 
 ## How to split
 
@@ -85,3 +86,5 @@ A refactor without a gate silently regrows. Before this task is done:
 
 Run the repo's own suite, then run the program itself and confirm the
 behaviour is unchanged. Testing is the last step, never the first.
+
+REMOVE ME AFTER FINISH
