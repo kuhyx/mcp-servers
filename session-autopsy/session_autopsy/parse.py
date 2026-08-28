@@ -6,10 +6,10 @@ parse result outlives the accumulator fields it updates.
 
 from __future__ import annotations
 
-from collections import Counter
-from datetime import datetime, timezone
 import json
 import re
+from collections import Counter
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from session_autopsy.records import (
@@ -458,7 +458,7 @@ def parse_session(transcript_path: Path) -> SessionRecord:
         transcript_path=str(transcript_path),
         file_size=stat.st_size,
         file_mtime=stat.st_mtime,
-        analyzed_at=datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+        analyzed_at=datetime.now(tz=UTC).isoformat(timespec="seconds"),
         meta=acc.meta,
         counts=acc.counts,
         tokens=acc.tokens,

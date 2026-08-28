@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import json
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from session_autopsy import report
@@ -23,7 +23,7 @@ from session_autopsy.tests.conftest import (
 if TYPE_CHECKING:
     from pathlib import Path
 
-NOW = datetime(2026, 7, 24, 12, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
 
 
 def test_fmt_tokens() -> None:

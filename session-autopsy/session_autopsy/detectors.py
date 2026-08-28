@@ -6,8 +6,8 @@ cross-invocation command similarity, savings from measured token usage.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import hashlib
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from session_autopsy import stats

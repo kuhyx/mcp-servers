@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from session_autopsy import detectors, stats
 from session_autopsy.detectors import analyze
@@ -18,7 +18,7 @@ from session_autopsy.tests.conftest import (
     session_meta,
 )
 
-NOW = datetime(2026, 7, 24, 12, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
 OLD = "2026-01-01T00:00:00.000Z"
 
 
