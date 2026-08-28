@@ -18,7 +18,9 @@ if TYPE_CHECKING:
 REPORT_FILE = "REPORT.md"
 STATE_FILE = "state.json"
 COMPILED_FILE = "compiled.json"
-TRACES_HINT = "PYTHONPATH=~/testsAndMisc python3 -m session_autopsy traces"
+TRACES_HINT = (
+    "cd ~/mcp-servers/session-autopsy && PYTHONPATH=. python3 -m session_autopsy traces"
+)
 THOUSAND = 1_000
 MILLION = 1_000_000
 TABLE_TOP = 40

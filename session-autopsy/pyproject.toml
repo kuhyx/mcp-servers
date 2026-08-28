@@ -2,7 +2,7 @@
 name = "session-autopsy"
 version = "0.2.0"
 description = "Zero-token analyzer for Claude Code transcripts: finds automation candidates and prices wasted API turns."
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 # No third-party runtime dependencies: `Self` is in the stdlib from 3.11,
 # which is this package's floor anyway.
 dependencies = []

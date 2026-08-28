@@ -1,7 +1,7 @@
 """Command-line entry point for the session autopsy analyzer.
 
-Usage, with ``PYTHONPATH=~/testsAndMisc`` and ``python3 -m
-session_autopsy``:
+Usage, from ``~/mcp-servers/session-autopsy`` with ``PYTHONPATH=.`` and
+``python3 -m session_autopsy``:
 
     ingest <transcript.jsonl>
     scan --jobs 8
@@ -13,11 +13,11 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
-from datetime import datetime, timezone
 import json
-from pathlib import Path
 import sys
 import time
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from session_autopsy import config, detectors, report, store, traces
@@ -56,7 +56,7 @@ def _now() -> datetime:
     Returns:
         Timezone-aware now.
     """
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=UTC)
 
 
 def build_parser() -> argparse.ArgumentParser:
