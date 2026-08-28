@@ -3,13 +3,15 @@ name = "session-autopsy"
 version = "0.2.0"
 description = "Zero-token analyzer for Claude Code transcripts: finds automation candidates and prices wasted API turns."
 requires-python = ">=3.11"
-dependencies = ["typing_extensions>=4.0"]
+# No third-party runtime dependencies: `Self` is in the stdlib from 3.11,
+# which is this package's floor anyway.
+dependencies = []
 
 [project.scripts]
 session-autopsy = "session_autopsy.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.6"]
+dev = ["pytest==9.1.1", "pytest-cov==7.1.0", "ruff==0.16.5"]
 
 [build-system]
 requires = ["setuptools>=68"]
