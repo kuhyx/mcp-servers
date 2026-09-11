@@ -21,7 +21,7 @@ def test_command_signature() -> None:
     """Wrappers keep their first non-flag, non-numeric argument."""
     assert command_signature("") == ""
     assert command_signature("git status") == "git"
-    assert command_signature("cd /home/kuhy/testsAndMisc && ls") == "cd <PATH>"
+    assert command_signature("cd /home/kuhy/src/testsAndMisc && ls") == "cd <PATH>"
     assert command_signature("timeout 120 python3 -m x") == "timeout python3"
     assert command_signature("sudo -n true") == "sudo true"
     assert command_signature("sudo -n") == "sudo"

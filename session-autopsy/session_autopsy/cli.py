@@ -1,6 +1,6 @@
 """Command-line entry point for the session autopsy analyzer.
 
-Usage, from ``~/mcp-servers/session-autopsy`` with ``PYTHONPATH=.`` and
+Usage, from ``~/src/mcp-servers/session-autopsy`` with ``PYTHONPATH=.`` and
 ``python3 -m session_autopsy``:
 
     ingest <transcript.jsonl>

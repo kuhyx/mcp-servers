@@ -43,7 +43,7 @@ Reads Claude Code transcripts and reports where the tokens went, with no model i
 loop. Runs as the `SessionEnd` hook:
 
 ```bash
-PYTHONPATH="$HOME/mcp-servers/session-autopsy" python3 -m session_autopsy ingest "$transcript" --quiet
+PYTHONPATH="$HOME/src/mcp-servers/session-autopsy" python3 -m session_autopsy ingest "$transcript" --quiet
 ```
 
 See `session-autopsy/README.md`. Extracted with history intact; 100% branch coverage.

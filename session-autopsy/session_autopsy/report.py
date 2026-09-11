@@ -19,7 +19,7 @@ REPORT_FILE = "REPORT.md"
 STATE_FILE = "state.json"
 COMPILED_FILE = "compiled.json"
 TRACES_HINT = (
-    "cd ~/mcp-servers/session-autopsy && PYTHONPATH=. python3 -m session_autopsy traces"
+    "cd ~/src/mcp-servers/session-autopsy && PYTHONPATH=. python3 -m session_autopsy traces"
 )
 THOUSAND = 1_000
 MILLION = 1_000_000
