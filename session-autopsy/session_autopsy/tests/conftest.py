@@ -24,6 +24,8 @@ from session_autopsy.records import (
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from session_autopsy.accumulator import Accumulator
+
 
 @dataclass
 class AutopsyEnv:
@@ -216,3 +218,22 @@ def record(
         ),
         obs=obs if obs is not None else Observations(),
     )
+
+
+def feed(acc: Accumulator, *lines: Line) -> None:
+    """Feed dict lines through an accumulator as JSON."""
+    for line in lines:
+        acc.feed_line(json.dumps(line))
+
+
+def compiled_entry(**over: object) -> dict[str, object]:
+    """A compiled.json entry with sensible defaults."""
+    entry: dict[str, object] = {
+        "candidate_id": "skill-finish",
+        "skill": "finish",
+        "script": "/x/finish.sh",
+        "verdict": "compiled",
+        "compiled_at": "2026-07-10T00:00:00+00:00",
+    }
+    entry.update(over)
+    return entry

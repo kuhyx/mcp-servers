@@ -1,4 +1,4 @@
-"""Tests for report rendering, state.json, and the measure scoreboard."""
+"""Tests for REPORT.md rendering and its sections."""
 
 from __future__ import annotations
 
@@ -6,8 +6,9 @@ import json
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from session_autopsy import report
-from session_autopsy.detectors import Candidate, analyze
+from session_autopsy import report, report_state, report_turns
+from session_autopsy.candidates import Candidate
+from session_autopsy.detectors import analyze
 from session_autopsy.records import (
     ActivityCounts,
     Observations,
@@ -15,6 +16,7 @@ from session_autopsy.records import (
     TurnEfficiency,
 )
 from session_autopsy.tests.conftest import (
+    compiled_entry,
     invocation,
     record,
     session_meta,
@@ -24,97 +26,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
-
-
-def test_fmt_tokens() -> None:
-    """Plain, k, and M ranges."""
-    assert report.fmt_tokens(842) == "842"
-    assert report.fmt_tokens(74_500) == "74k"
-    assert report.fmt_tokens(1_234_567) == "1.2M"
-
-
-def test_load_state_variants(tmp_path: Path) -> None:
-    """Missing, corrupt, and wrong-type state files read as empty."""
-    assert report.load_state(tmp_path) == {}
-    state_path = tmp_path / report.STATE_FILE
-    state_path.write_text("{bad", encoding="utf-8")
-    assert report.load_state(tmp_path) == {}
-    state_path.write_text("[1]", encoding="utf-8")
-    assert report.load_state(tmp_path) == {}
-    state_path.write_text('{"unreviewed_count": 2}', encoding="utf-8")
-    assert report.load_state(tmp_path) == {"unreviewed_count": 2}
-
-
-def test_load_compiled_variants(tmp_path: Path) -> None:
-    """Missing, corrupt, wrong-type, and mixed compiled files."""
-    assert report.load_compiled(tmp_path) == []
-    compiled_path = tmp_path / report.COMPILED_FILE
-    compiled_path.write_text("{bad", encoding="utf-8")
-    assert report.load_compiled(tmp_path) == []
-    compiled_path.write_text('{"a": 1}', encoding="utf-8")
-    assert report.load_compiled(tmp_path) == []
-    compiled_path.write_text('[{"skill": "finish"}, 3]', encoding="utf-8")
-    assert report.load_compiled(tmp_path) == [{"skill": "finish"}]
-
-
-def test_write_state_lifecycle(tmp_path: Path) -> None:
-    """Unreviewed counting, mark-reviewed, stale-id pruning, junk tolerance."""
-    assert report.write_state(tmp_path, ["a", "b"], NOW) == 2
-    assert report.write_state(tmp_path, ["a", "b"], NOW, mark_reviewed=True) == 0
-    assert report.write_state(tmp_path, ["a", "b", "c"], NOW) == 1
-    assert report.write_state(tmp_path, ["c"], NOW) == 1
-    state_path = tmp_path / report.STATE_FILE
-    state_path.write_text('{"reviewed_ids": "junk"}', encoding="utf-8")
-    assert report.write_state(tmp_path, ["z"], NOW) == 1
-
-
-def _compiled_entry(**over: object) -> dict[str, object]:
-    """A compiled.json entry with sensible defaults."""
-    entry: dict[str, object] = {
-        "candidate_id": "skill-finish",
-        "skill": "finish",
-        "script": "/x/finish.sh",
-        "verdict": "compiled",
-        "compiled_at": "2026-07-10T00:00:00+00:00",
-    }
-    entry.update(over)
-    return entry
-
-
-def test_measure_lines_variants() -> None:
-    """Placeholder, skips, before-only, delta, and after-only cases."""
-    before = record(
-        "old",
-        meta=session_meta(started_at="2026-07-01T00:00:00Z"),
-        obs=Observations(
-            skill_invocations=[
-                invocation(output=100000, cache_write=0),
-                invocation(name="other"),
-            ]
-        ),
-    )
-    after = record(
-        "new",
-        meta=session_meta(started_at="2026-07-20T00:00:00Z"),
-        obs=Observations(skill_invocations=[invocation(output=10000, cache_write=0)]),
-    )
-    assert report.measure_lines([], [], None) == [
-        "nothing compiled yet — run /compile-candidate on a ranked candidate",
-    ]
-    skipped = [
-        _compiled_entry(skill=""),
-        _compiled_entry(script=None),
-        _compiled_entry(skill="other"),
-    ]
-    assert len(report.measure_lines([before], skipped, "finish")) == 1
-    only_before = report.measure_lines([before], [_compiled_entry()], None)
-    assert "no post-compile invocations yet" in only_before[0]
-    delta = report.measure_lines([before, after], [_compiled_entry()], None)
-    assert "→ after" in delta[0]
-    assert "-90%" in delta[0]
-    after_only = report.measure_lines([after], [_compiled_entry()], None)
-    assert "before 0/inv (n=0)" in after_only[0]
-    assert "%" not in after_only[0]
 
 
 def _fake_candidate(index: int) -> Candidate:
@@ -150,8 +61,8 @@ def test_reviewed_keep_llm_section() -> None:
     assert "none reviewed yet" in report._reviewed_keep_llm([])
     section = report._reviewed_keep_llm(
         [
-            _compiled_entry(verdict="keep-llm", candidate_id="skill-x"),
-            _compiled_entry(verdict="dropped", candidate_id="skill-y"),
+            compiled_entry(verdict="keep-llm", candidate_id="skill-x"),
+            compiled_entry(verdict="dropped", candidate_id="skill-y"),
         ]
     )
     assert "skill-x" in section
@@ -172,8 +83,8 @@ def test_render_and_write_report(tmp_path: Path) -> None:
     ]
     result = analyze(records, NOW)
     compiled = [
-        _compiled_entry(),
-        _compiled_entry(
+        compiled_entry(),
+        compiled_entry(
             verdict="keep-llm", candidate_id="skill-explain-diff", script=None
         ),
     ]
@@ -187,8 +98,8 @@ def test_render_and_write_report(tmp_path: Path) -> None:
     assert unreviewed == 1
     assert len(result.candidates) > 1
     assert (tmp_path / report.REPORT_FILE).is_file()
-    (tmp_path / report.COMPILED_FILE).write_text(
-        json.dumps([_compiled_entry()]), encoding="utf-8"
+    (tmp_path / report_state.COMPILED_FILE).write_text(
+        json.dumps([compiled_entry()]), encoding="utf-8"
     )
     assert report.write_report(tmp_path, records, result, NOW) == 0
     assert "already handled" in (tmp_path / report.REPORT_FILE).read_text(
@@ -213,8 +124,10 @@ def test_trend_and_header_empty_states() -> None:
 
 def test_state_file_is_valid_json(tmp_path: Path) -> None:
     """state.json holds the ranked ids and the timestamp."""
-    report.write_state(tmp_path, ["x"], NOW)
-    payload = json.loads((tmp_path / report.STATE_FILE).read_text(encoding="utf-8"))
+    report_state.write_state(tmp_path, ["x"], NOW)
+    payload = json.loads(
+        (tmp_path / report_state.STATE_FILE).read_text(encoding="utf-8")
+    )
     assert payload["candidate_ids"] == ["x"]
     assert payload["last_generated"].startswith("2026-07-24")
 
@@ -230,11 +143,11 @@ def test_turn_efficiency_section_prices_mechanical_turns() -> None:
         lint_test_turns=10,
         vcs_check_turns=5,
     )
-    text = report._turn_efficiency([rec])
+    text = report_turns.turn_efficiency([rec])
     assert "100 tool turns carrying 120 calls" in text
     assert "batched: 12 (12%)" in text
     assert "**35** (35%)" in text  # 20 + 10 + 5 mechanical turns
 
 
 def test_turn_efficiency_section_without_tool_turns() -> None:
-    assert "no tool turns recorded yet" in report._turn_efficiency([record("s1")])
+    assert "no tool turns recorded yet" in report_turns.turn_efficiency([record("s1")])

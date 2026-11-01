@@ -11,7 +11,8 @@ import fcntl
 import json
 from typing import TYPE_CHECKING, Self
 
-from session_autopsy.records import SessionRecord, record_from_dict
+from session_autopsy.record_codec import record_from_dict
+from session_autopsy.records import SessionRecord
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

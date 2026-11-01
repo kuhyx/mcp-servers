@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from session_autopsy import detectors, stats
+from session_autopsy import detect_ngrams, stats
 from session_autopsy.detectors import analyze
 from session_autopsy.records import (
     ActivityCounts,
@@ -158,10 +158,12 @@ def test_ngram_below_session_threshold() -> None:
 
 def test_contains_and_drop_subgrams() -> None:
     """Containment handles equal-length and absent cases."""
-    assert detectors._contains(("a", "b", "c"), ("b", "c"))
-    assert not detectors._contains(("a", "b"), ("a", "b"))
-    assert not detectors._contains(("a", "b", "c"), ("c", "d"))
-    kept = detectors._drop_subgrams({("a", "b", "c"): 9, ("a", "b"): 9, ("z", "q"): 9})
+    assert detect_ngrams.contains(("a", "b", "c"), ("b", "c"))
+    assert not detect_ngrams.contains(("a", "b"), ("a", "b"))
+    assert not detect_ngrams.contains(("a", "b", "c"), ("c", "d"))
+    kept = detect_ngrams.drop_subgrams(
+        {("a", "b", "c"): 9, ("a", "b"): 9, ("z", "q"): 9}
+    )
     assert kept == {("a", "b", "c"), ("z", "q")}
 
 

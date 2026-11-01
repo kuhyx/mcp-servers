@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from session_autopsy.detectors import Candidate
+    from session_autopsy.candidates import Candidate
 
 
 def action_cell(cand: Candidate, handled: set[str]) -> str:

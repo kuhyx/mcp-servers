@@ -2,6 +2,17 @@
 
 from __future__ import annotations
 
+from session_autopsy.record_codec import record_from_dict
+from session_autopsy.record_values import (
+    as_float,
+    as_int,
+    dict_get,
+    list_of_dicts,
+    list_value,
+    opt_str,
+    str_int_map,
+    str_list,
+)
 from session_autopsy.records import (
     ActivityCounts,
     Observations,
@@ -9,62 +20,53 @@ from session_autopsy.records import (
     SessionRecord,
     SkillInvocation,
     TokenTotals,
-    _as_float,
-    _as_int,
-    _dict_get,
-    _list_of_dicts,
-    _list_value,
-    _opt_str,
-    _str_int_map,
-    _str_list,
-    record_from_dict,
 )
 
 
 def test_as_int_coercions() -> None:
     """bools and junk yield 0; numerics coerce."""
     flag: object = True
-    assert _as_int(flag) == 0
-    assert _as_int(5) == 5
-    assert _as_int(5.9) == 5
-    assert _as_int("x") == 0
-    assert _as_int(None) == 0
+    assert as_int(flag) == 0
+    assert as_int(5) == 5
+    assert as_int(5.9) == 5
+    assert as_int("x") == 0
+    assert as_int(None) == 0
 
 
 def test_as_float_coercions() -> None:
     """bools and junk yield 0.0; numerics coerce."""
     flag: object = True
-    assert _as_float(flag) == 0.0
-    assert _as_float(2) == 2.0
-    assert _as_float(2.5) == 2.5
-    assert _as_float("x") == 0.0
+    assert as_float(flag) == 0.0
+    assert as_float(2) == 2.0
+    assert as_float(2.5) == 2.5
+    assert as_float("x") == 0.0
 
 
 def test_opt_str() -> None:
     """Only non-empty strings survive."""
-    assert _opt_str("a") == "a"
-    assert _opt_str("") is None
-    assert _opt_str(3) is None
+    assert opt_str("a") == "a"
+    assert opt_str("") is None
+    assert opt_str(3) is None
 
 
 def test_dict_get() -> None:
     """Non-dict values index to None."""
-    assert _dict_get({"k": 1}, "k") == 1
-    assert _dict_get([1], "k") is None
+    assert dict_get({"k": 1}, "k") == 1
+    assert dict_get([1], "k") is None
 
 
 def test_list_helpers() -> None:
     """List filters tolerate wrong types and mixed elements."""
-    assert _list_value([1]) == [1]
-    assert _list_value("no") == []
-    assert _list_of_dicts([{"a": 1}, 2, "x"]) == [{"a": 1}]
-    assert _str_list(["a", 1, "b"]) == ["a", "b"]
+    assert list_value([1]) == [1]
+    assert list_value("no") == []
+    assert list_of_dicts([{"a": 1}, 2, "x"]) == [{"a": 1}]
+    assert str_list(["a", 1, "b"]) == ["a", "b"]
 
 
 def test_str_int_map() -> None:
     """Counter maps coerce keys to str and values to int."""
-    assert _str_int_map({"a": 2, 3: "junk"}) == {"a": 2, "3": 0}
-    assert _str_int_map("no") == {}
+    assert str_int_map({"a": 2, 3: "junk"}) == {"a": 2, "3": 0}
+    assert str_int_map("no") == {}
 
 
 def test_token_totals_add_usage() -> None:

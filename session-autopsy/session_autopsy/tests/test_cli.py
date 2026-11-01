@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from session_autopsy import cli, config, report, store
+from session_autopsy import cli, cli_scan, config, report, report_state, store
 from session_autopsy.records import Observations
 from session_autopsy.tests.conftest import (
     FileFacts,
@@ -100,16 +100,16 @@ def test_needs_analysis_on_size_change(autopsy_env: AutopsyEnv) -> None:
     """A stored (size, mtime) mismatch marks the transcript changed."""
     transcript = _seed_transcript(autopsy_env)
     index = {str(transcript): (transcript.stat().st_size, transcript.stat().st_mtime)}
-    assert not cli._needs_analysis(transcript, index)
+    assert not cli_scan.needs_analysis(transcript, index)
     index[str(transcript)] = (1, 1.0)
-    assert cli._needs_analysis(transcript, index)
+    assert cli_scan.needs_analysis(transcript, index)
 
 
 def test_parse_one_swallows_oserror(
     autopsy_env: AutopsyEnv, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """A vanished transcript logs to stderr and yields None."""
-    assert cli._parse_one(autopsy_env.projects / "gone.jsonl") is None
+    assert cli_scan.parse_one(autopsy_env.projects / "gone.jsonl") is None
     assert "skipping" in capsys.readouterr().err
 
 
@@ -145,7 +145,7 @@ def test_report_and_mark_reviewed(
     assert cli.main(["report", "--mark-reviewed"]) == 0
     assert "marked reviewed" in capsys.readouterr().out
     state = json.loads(
-        (autopsy_env.home / report.STATE_FILE).read_text(encoding="utf-8")
+        (autopsy_env.home / report_state.STATE_FILE).read_text(encoding="utf-8")
     )
     assert state["unreviewed_count"] == 0
 

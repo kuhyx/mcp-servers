@@ -16,6 +16,14 @@ repos:
         language: system
         files: \.(md|markdown)$
 
+      # 250-line cap on every file in the commit (code and prose). The shared
+      # gate in ~/src/utils owns the cap and exemptions; no baseline, no
+      # allowlist, so a regrown file fails the commit instead of being noted.
+      - id: file-length
+        name: file length <= 250 lines
+        entry: scripts/check_file_length.sh
+        language: system
+
       # Every dependency on its ecosystem's newest STABLE release, exact-pinned
       # so the question is mechanically answerable at all.
       #
